@@ -27,10 +27,12 @@ jobs:
     steps:
       - name: Download latest Opengrep binary
         id: download-binary
-        uses: actions/download-artifact@v4
+        uses: robinraju/release-downloader@a96f54c1b5f5e09e47d9504526e96febd949d4c2 #v1.11
         with:
-            name: opengrep_manylinux_x86
             repository: opengrep/opengrep
+            latest: true
+            preRelease: true
+            fileName: 'opengrep_manylinux_x86'
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@f7ce87c1d6bead3e36075b2ce75da1f6cc28aaca #v3.9.0
       - name: Login to Container Registry
