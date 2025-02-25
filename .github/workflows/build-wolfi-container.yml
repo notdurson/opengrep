@@ -68,13 +68,13 @@ jobs:
         # no key needed, we're using the GitHub OIDC flow
         if: github.event_name != 'pull_request'
         run: |
-          # Sign dev tags, version tags, and latest tags
-          echo "${TAGS}" | xargs -I {} cosign sign \
+          # the only tag is the ci tag
+          cosign sign \
             --yes \
             -a actor=${{ github.actor}} \
             -a ref_name=${{ github.ref_name}} \
             -a ref=${{ github.sha }} \
-            {}@${DIGEST}
+            ghcr.io/${{ github.repository_owner }}/opengrep:ci@${DIGEST}
         env:
           DIGEST: ${{ steps.build-container.outputs.digest }}
 
