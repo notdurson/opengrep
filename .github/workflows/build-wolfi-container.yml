@@ -54,7 +54,6 @@ jobs:
           context: .
           file: wolfi-canary.Dockerfile
           tags: |
-            ${{ github.repository_owner }}/opengrep:ci
             ghcr.io/${{ github.repository_owner }}/opengrep:ci
           push: true
       - name: "Create Image Attestation"
