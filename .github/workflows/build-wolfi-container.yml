@@ -20,17 +20,22 @@ permissions:
   contents: write
   packages: write
   id-token: write
+  attestations: write
 
 jobs:
   build-container:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Download latest Opengrep binary
         id: download-binary
-        uses: actions/download-artifact@v4
+        uses: robinraju/release-downloader@a96f54c1b5f5e09e47d9504526e96febd949d4c2 #v1.11
         with:
-            name: opengrep_manylinux_x86
             repository: opengrep/opengrep
+            latest: true
+            preRelease: true
+            fileName: 'opengrep_manylinux_x86'
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@f7ce87c1d6bead3e36075b2ce75da1f6cc28aaca #v3.9.0
       - name: Login to Container Registry
@@ -39,7 +44,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Install cosign"
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
+        if: github.event_name != 'pull_request'
       - name: Build Wolfi Container
+        id: build-container
         uses: docker/build-push-action@0adf9959216b96bec444f325f1e493d4aa344497 # v6.14.0
         with:
           context: .
@@ -48,5 +57,25 @@ jobs:
             ${{ github.repository_owner }}/opengrep:ci
             ghcr.io/${{ github.repository_owner }}/opengrep:ci
           push: true
+      - name: "Create Image Attestation"
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@7668571508540a607bdfd90a87a560489fe372eb # v2.1.0
+        with:
+          subject-digest: ${{ steps.build-container.outputs.digest }}
+          subject-name: ghcr.io/${{ github.repository }}
+          push-to-registry: true
+      - name: "Sign images with environment annotations"
+        # no key needed, we're using the GitHub OIDC flow
+        if: github.event_name != 'pull_request'
+        run: |
+          # Sign dev tags, version tags, and latest tags
+          echo "${TAGS}" | xargs -I {} cosign sign \
+            --yes \
+            -a actor=${{ github.actor}} \
+            -a ref_name=${{ github.ref_name}} \
+            -a ref=${{ github.sha }} \
+            {}@${DIGEST}
+        env:
+          DIGEST: ${{ steps.build-container.outputs.digest }}
 
-    
+      
