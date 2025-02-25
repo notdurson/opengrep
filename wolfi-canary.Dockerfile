@@ -9,4 +9,4 @@ RUN chmod +x /app/opengrep
 
 USER nonroot
 
-ENTRYPOINT ["/app/opengrep ci --sarif --sarif-output opengrep_report.sarif --config auto"]
+ENTRYPOINT ["/app/opengrep", "ci", "--sarif", "--sarif-output", "opengrep_report.sarif", "--config", "auto"]
