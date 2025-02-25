@@ -25,6 +25,8 @@ jobs:
   build-container:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Download latest Opengrep binary
         id: download-binary
         uses: robinraju/release-downloader@a96f54c1b5f5e09e47d9504526e96febd949d4c2 #v1.11
