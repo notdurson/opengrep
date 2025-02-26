@@ -5,8 +5,8 @@ WORKDIR /app
 
 COPY opengrep_manylinux_x86 /app/opengrep
 
-RUN chmod +x /app/opengrep
+RUN chmod +x /app/opengrep && ln -s /app/opengrep /usr/local/bin/opengrep
 
 USER nonroot
 
-ENTRYPOINT ["/app/opengrep", "ci", "--sarif", "--sarif-output", "opengrep_report.sarif", "--config", "auto"]
+ENTRYPOINT ["opengrep"]
