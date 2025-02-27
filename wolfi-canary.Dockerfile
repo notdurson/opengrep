@@ -7,11 +7,24 @@
 
 # thus, we don't Chainguard's bare wolfi-base image, but rather the python image
 # which has all the dependencies we need
-FROM cgr.dev/chainguard/python:latest
+
+# we start with the dev image so we can install the CLI in the same container
+# the bare python image doesn't have a shell
+FROM cgr.dev/chainguard/python:latest-dev as builder
+
+# we don't want the python bytecode
+ENV LANG=C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /pyopengrep
 
+# python images run as nonroot by default so we need to switch to root
+# for package operations
+USER root
+
 # ensure that base packages are up to date
+# minimal deps please
 RUN apk upgrade --no-cache && \
     apk add --no-cache --virtual=.run-deps\
         git git-lfs openssh \
@@ -20,29 +33,42 @@ RUN apk upgrade --no-cache && \
 # with this build, we need to include the cli
 COPY cli ./
 
-# stealing Yoann's build logic
+# since we're gonna copy this to a more minimal image,
+# we need to create a venv and install the CLI in it
+RUN python -m venv venv
+ENV PATH="/pyopengrep/venv/bin:$PATH"
+
+# stealing Yoann's build logic to build the CLI
 RUN apk add --no-cache --virtual=.build-deps build-base make &&\
      pip install /pyopengrep &&\
      apk del .build-deps
+
+
+# now we can use a more barebones image
+FROM cgr.dev/chainguard/python:latest
+
+WORKDIR /pyopengrep
+COPY --from=builder /pyopengrep/venv/bin /pyopengrep/venv/bin
+
+# same path modification as before
+ENV PATH="/pyopengrep/venv/bin:$PATH"
 
 # switch to /usr/local/bin to pull in the opengrep binary
 WORKDIR /usr/local/bin
 
 COPY opengrep_manylinux_x86 /usr/local/bin/opengrep
 
-# we don't need the old workdir anymore 
 # ensure `/src/` is owned by the nonroot user
 # (this is an artifact of the original Semgrep Dockerfile)
 # we also need to ensure that the .gitconfig is owned by the nonroot user
 RUN chown -R nonroot:nonroot /src && \
-    chown -R nonroot:nonroot ~nonroot/.gitconfig && \
-    rm -rf /pyopengrep
+    chown -R nonroot:nonroot ~nonroot/.gitconfig
 
-# never run a chainguard image as root, it makes Richard Stallman cry
+# never run a chainguard image as root, they aren't designed for it
 USER nonroot
 
 # transparency: put the Dockerfile in the image
-# Let the user know how their container was built
+# this shows the user how the image was built
 COPY wolfi-canary.Dockerfile /Dockerfile
 
 # bare minimum entrypoint so users can construct their own command strings
