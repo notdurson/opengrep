@@ -70,8 +70,7 @@ COPY opengrep_manylinux_x86 /usr/local/bin/opengrep
 # ensure `/src/` is owned by the nonroot user
 # (this is an artifact of the original Semgrep Dockerfile)
 # we also need to ensure that the .gitconfig is owned by the nonroot user
-RUN chown -R nonroot:nonroot /src && \
-    chown -R nonroot:nonroot ~nonroot/.gitconfig
+RUN mkdir /src && chown -R nonroot:nonroot /src
 
 # never run a chainguard image as root, they aren't designed for it
 USER nonroot
