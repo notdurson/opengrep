@@ -48,7 +48,7 @@ RUN apk add --no-cache --virtual=.build-deps build-base make &&\
 # (this is an artifact of the original Semgrep Dockerfile)
 # this needs to be done in the builder stage because the final container
 # doesn't have a shell so we can't run any commands
-RUN chown -R nonroot:nonroot /src
+RUN RUN mkdir /src && chown -R nonroot:nonroot /src
 
 
 # now we can use a more barebones image
@@ -66,11 +66,6 @@ ENV PATH="/pyopengrep/venv/bin:$PATH"
 WORKDIR /usr/local/bin
 
 COPY opengrep_manylinux_x86 /usr/local/bin/opengrep
-
-# ensure `/src/` is owned by the nonroot user
-# (this is an artifact of the original Semgrep Dockerfile)
-# we also need to ensure that the .gitconfig is owned by the nonroot user
-RUN mkdir /src && chown -R nonroot:nonroot /src
 
 # never run a chainguard image as root, they aren't designed for it
 USER nonroot
