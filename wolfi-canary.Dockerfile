@@ -10,7 +10,7 @@
 
 # we start with the dev image so we can install the CLI in the same container
 # the bare python image doesn't have a shell
-FROM cgr.dev/chainguard/python:latest-dev as builder
+FROM cgr.dev/chainguard/python:latest-dev AS builder
 
 # we don't want the python bytecode
 ENV LANG=C.UTF-8
@@ -48,7 +48,7 @@ RUN apk add --no-cache --virtual=.build-deps build-base make &&\
 # (this is an artifact of the original Semgrep Dockerfile)
 # this needs to be done in the builder stage because the final container
 # doesn't have a shell so we can't run any commands
-RUN RUN mkdir /src && chown -R nonroot:nonroot /src
+RUN mkdir /src && chown -R nonroot:nonroot /src
 
 
 # now we can use a more barebones image
