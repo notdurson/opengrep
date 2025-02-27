@@ -44,11 +44,20 @@ RUN apk add --no-cache --virtual=.build-deps build-base make &&\
      apk del .build-deps
 
 
+# ensure `/src/` is owned by the nonroot user
+# (this is an artifact of the original Semgrep Dockerfile)
+# this needs to be done in the builder stage because the final container
+# doesn't have a shell so we can't run any commands
+RUN chown -R nonroot:nonroot /src
+
+
 # now we can use a more barebones image
 FROM cgr.dev/chainguard/python:latest
 
 WORKDIR /pyopengrep
+# copy everything we need from the builder stage
 COPY --from=builder /pyopengrep/venv/bin /pyopengrep/venv/bin
+COPY --from=builder /src /src
 
 # same path modification as before
 ENV PATH="/pyopengrep/venv/bin:$PATH"
