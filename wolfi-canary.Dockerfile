@@ -18,7 +18,7 @@ USER root
 RUN mkdir /src && chown -R nonroot:nonroot /src
 
 COPY opengrep_manylinux_x86 /usr/bin/opengrep
-RUN chmod +x /bin/opengrep
+RUN chmod +x /usr/bin/opengrep
 
 # never run a chainguard image as root, they aren't designed for it
 USER nonroot
